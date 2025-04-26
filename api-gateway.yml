@@ -1,0 +1,73 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          enabled: true  # Включаем автоматическое определение сервисов через Eureka
+          lowerCaseServiceId: true  # Определение сервиса в нижнем регистре
+      routes:
+        # Маршрут для Product Service
+        - id: product-service
+          uri: lb://product-service  # Используется логика балансировщика нагрузки
+          predicates:
+            - Path=/api/products/**
+          filters:
+            - StripPrefix=1  # Убираем первый элемент из пути URL
+
+        # Маршрут для Order Service
+        - id: order-service
+          uri: lb://order-service
+          predicates:
+            - Path=/api/orders/**
+          filters:
+            - StripPrefix=1
+
+        # Маршрут для User Service
+        - id: user-service
+          uri: lb://user-service
+          predicates:
+            - Path=/api/users/**, /api/auth/**
+          filters:
+            - StripPrefix=1
+
+        # Маршрут для Cart Service
+        - id: cart-service
+          uri: lb://cart-service
+          predicates:
+            - Path=/api/carts/**
+          filters:
+            - StripPrefix=1
+
+        # Маршрут для Payment Service
+        - id: payment-service
+          uri: lb://payment-service
+          predicates:
+            - Path=/api/payments/**
+          filters:
+            - StripPrefix=1
+
+  config:
+    enabled: false  # Отключаем Spring Cloud Config Server, если не используем
+
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://localhost:8761/eureka/  # Адрес Eureka Server для регистрации
+  instance:
+    preferIpAddress: true  # Используем IP-адрес для регистрации в Eureka
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,gateway  # Включаем дополнительные метрики и информацию о шлюзе
+  endpoint:
+    health:
+      show-details: always  # Показываем полные детали состояния здоровья
+    gateway:
+      enabled: true  # Включаем управление состоянием шлюза
